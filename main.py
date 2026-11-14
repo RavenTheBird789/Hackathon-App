@@ -265,6 +265,7 @@ def home():
         y, m = cur.year, cur.month
 
     all_events = attach_distance([e for e in load_events() if e.days_until(cur) >= 0])
+    filtered = any(request.args.get(k) for k in ("q", "tag", "day", "major", "urgent"))
     events = search(all_events, request.args.get("q", ""))
     tag, day = request.args.get("tag", ""), request.args.get("day", "")
     if tag:
@@ -276,15 +277,28 @@ def home():
     if request.args.get("urgent"):
         events = [e for e in events if e.is_urgent(cur)]
 
+    if not filtered:  # home starts blank; results appear only after a search/filter
+        events = []
+
     py, pm = shift_month(y, m, -1)
     ny, nm = shift_month(y, m, 1)
     return render_template("page.html", page="home", user=user, events=events,
                            weeks=build_calendar(y, m, all_events, cur),
                            month_name=f"{calendar.month_name[m]} {y}",
                            prev=f"{py}-{pm}", next=f"{ny}-{nm}", cur_month=f"{y}-{m}",
-                           args=request.args, bookmarks=session.get("bookmarks", []),
+                           args=request.args, filtered=filtered, bookmarks=session.get("bookmarks", []),
                            tags=sorted({t for e in all_events for t in e.task_tags}),
                            sorted_events=sort_events(events, user["major"]))
+
+
+@app.route("/events")
+def events_page():
+    """Events tab: every upcoming event, most relevant first."""
+    user = current_user()
+    upcoming = attach_distance([e for e in load_events() if e.days_until() >= 0])
+    return render_template("page.html", page="events", user=user,
+                           events=sort_events(upcoming, user["major"]),
+                           bookmarks=session.get("bookmarks", []))
 
 
 @app.route("/location", methods=["POST"])
@@ -301,14 +315,22 @@ def set_location():
 @app.route("/bookmark/<int:eid>", methods=["POST"])
 def bookmark(eid):
     marks = session.get("bookmarks", [])
-    marks.remove(eid) if eid in marks else marks.append(eid)
-    session["bookmarks"] = marks
+    new = session.get("new_marks", [])
+    if eid in marks:
+        marks.remove(eid)
+        if eid in new:
+            new.remove(eid)
+    else:
+        marks.append(eid)
+        new.append(eid)  # unseen until the Bookmarks page is opened
+    session["bookmarks"], session["new_marks"] = marks, new
     return redirect(request.referrer or url_for("home"))
 
 
 @app.route("/bookmarks")
 def bookmarks():
     marks = session.get("bookmarks", [])
+    session["new_marks"] = []  # opening the page clears the red badge
     events = attach_distance([e for e in load_events() if e.id in marks])
     return render_template("page.html", page="bookmarks", user=current_user(),
                            events=events, bookmarks=marks)
@@ -392,7 +414,7 @@ def inject_badge():
     """Number of undismissed notifications, for the red badge on the bell."""
     gone = session.get("dismissed", [])
     count = len([n for n in notify(load_events(), date.today()) if n["id"] not in gone])
-    return {"notif_count": count}
+    return {"notif_count": count, "bookmark_new": len(session.get("new_marks", []))}
 
 
 ensure_admin()
