@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en" data-theme="navy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NCAT Aggie Event Hub</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="app">
+  <header class="top">
+    <div class="logo" aria-hidden="true">A&amp;T</div>
+    <h1>NCAT <span>Aggie</span> Event Hub</h1>
+    <button id="theme" class="icon-btn" aria-label="Switch color theme">🎨</button>
+  </header>
+
+  <main id="main">
+  {% with msgs = get_flashed_messages() %}{% for m in msgs %}<p class="flash" role="alert">{{ m }}</p>{% endfor %}{% endwith %}
+
+  {% if page == 'home' %}
+    <div class="layout"><div class="side">
+    <section class="panel" aria-label="Calendar">
+      <div class="cal-head">
+        <h2>{{ month_name }}</h2>
+        <nav aria-label="Change month">
+          <a class="icon-btn" href="{{ url_for('home', m=prev) }}" aria-label="Previous month">‹</a>
+          <a class="icon-btn" href="{{ url_for('home', m=next) }}" aria-label="Next month">›</a>
+        </nav>
+      </div>
+      <table class="cal">
+        <thead><tr>{% for d in ['Su','Mo','Tu','We','Th','Fr','Sa'] %}<th scope="col">{{ d }}</th>{% endfor %}</tr></thead>
+        <tbody>
+        {% for week in weeks %}<tr>
+          {% for c in week %}<td>
+            {% if c %}<a href="{{ url_for('home', m=cur_month, day=c.iso) }}"
+               class="day {{ 'today' if c.today }} {{ 'urgent' if c.urgent }}"
+               aria-label="{{ c.iso }}{{ ', ' ~ c.dots ~ ' event(s)' if c.dots }}{{ ', due soon' if c.urgent }}">
+               {{ c.n }}<span class="dots">{% for i in range(c.dots) %}<i></i>{% endfor %}</span></a>{% endif %}
+          </td>{% endfor %}
+        </tr>{% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <form class="search" method="get" role="search">
+      <label class="sr" for="q">Search events</label>
+      <input id="q" name="q" type="search" placeholder="Search events…" value="{{ args.get('q','') }}">
+      {% for k in ['tag','day','major','urgent'] if args.get(k) %}<input type="hidden" name="{{ k }}" value="{{ args.get(k) }}">{% endfor %}
+    </form>
+
+    <button id="gps" class="btn alt small" type="button">Use my precise location</button>
+
+    <h2>Importance filters</h2>
+    <div class="chips">
+      <a class="chip {{ 'on' if args.get('major') }}" href="{{ url_for('home', q=args.get('q'), tag=args.get('tag'), major=None if args.get('major') else 1, urgent=args.get('urgent')) }}">By major: {{ user.major }}</a>
+      <a class="chip {{ 'on' if args.get('urgent') }}" href="{{ url_for('home', q=args.get('q'), tag=args.get('tag'), major=args.get('major'), urgent=None if args.get('urgent') else 1) }}">By deadline: this week</a>
+    </div>
+
+    <h2>Popular tags</h2>
+    <div class="chips">
+      {% for t in tags %}<a class="chip tag {{ 'on' if args.get('tag') == t }}" href="{{ url_for('home', tag=None if args.get('tag') == t else t) }}">{{ t }}</a>{% endfor %}
+    </div>
+
+    </div><div class="feed">
+    <h2>Upcoming events {% if args.get('day') or args.get('tag') or args.get('q') or args.get('major') or args.get('urgent') %}<a class="clear" href="{{ url_for('home') }}">Clear filters</a>{% endif %}</h2>
+    {% set events = sorted_events %}
+    <div class="cards">{% include 'cards.html' %}</div>
+    </div></div>
+
+  {% elif page == 'bookmarks' %}
+    <h2>Bookmarks</h2>
+    <div class="cards">{% include 'cards.html' %}</div>
+
+  {% elif page == 'notifications' %}
+    <h2>Notifications</h2>
+    {% for n in notes %}<p class="note {{ n.color }}">{{ n.text }}</p>
+    {% else %}<p class="empty">Nothing due this week. New events appear here.</p>{% endfor %}
+
+  {% elif page == 'profile' %}
+    <h2>Profile</h2>
+    <section class="panel">
+      <p>Signed in as <strong>{{ user.name }}</strong> ({{ user.role }}) · Major: {{ user.major }}</p>
+      {% if user.role != 'guest' %}
+        <form method="post" action="{{ url_for('logout') }}"><button class="btn">Log out</button></form>
+      {% else %}
+        <form method="post" action="{{ url_for('login') }}" class="stack">
+          <label>Username <input name="username" required autocomplete="username"></label>
+          <label>Password <input name="password" type="password" required autocomplete="current-password"></label>
+          <button class="btn">Log in</button>
+          <button class="btn alt" formaction="{{ url_for('register') }}">Create account</button>
+          <label>Major (for new accounts)
+            <select name="major"><option>Undecided</option>{% for group, items in majors.items() %}<optgroup label="{{ group }}">{% for m in items %}<option>{{ m }}</option>{% endfor %}</optgroup>{% endfor %}</select></label>
+        </form>
+      {% endif %}
+    </section>
+    {% if user.role == 'admin' %}
+    <h2>Admin: accounts</h2>
+    <section class="panel">
+      {% for name, u in users.items() if name != 'admin' %}
+        <div class="row"><span>{{ name }} <small>({{ u.major }})</small></span>
+          <form method="post" action="{{ url_for('admin', action='reset', name=name) }}">
+            <label class="sr" for="pw-{{ name }}">New password for {{ name }}</label>
+            <input id="pw-{{ name }}" name="password" type="password" placeholder="New password" required>
+            <button class="btn small">Reset</button></form>
+          <form method="post" action="{{ url_for('admin', action='delete', name=name) }}"><button class="btn small danger">Delete</button></form>
+        </div>
+      {% else %}<p class="empty">No other accounts yet.</p>{% endfor %}
+    </section>
+    {% endif %}
+  {% endif %}
+  </main>
+
+  <nav class="tabs" aria-label="Main">
+    {% for key, label, icon, ep in [('home','Home/Calendar','🏠','home'),('bookmarks','Bookmarks','🔖','bookmarks'),('notifications','Notifications','🔔','notifications'),('profile','Profile','👤','profile')] %}
+    <a href="{{ url_for(ep) }}" {% if page == key %}aria-current="page" class="active"{% endif %}><span aria-hidden="true">{{ icon }}</span>{{ label }}</a>
+    {% endfor %}
+  </nav>
+</div>
+<script>
+  const gps = document.getElementById("gps");
+  if (gps) gps.onclick = () => navigator.geolocation.getCurrentPosition(
+    pos => fetch("/location", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({lat: pos.coords.latitude, lon: pos.coords.longitude})}).then(() => location.reload()),
+    () => alert("Location blocked. Allow it in your browser, or keep using the approximate location."));
+  const root = document.documentElement, KEY = "ncat-theme";
+  try { root.dataset.theme = localStorage.getItem(KEY) || "navy"; } catch (e) {}
+  document.getElementById("theme").onclick = () => {
+    root.dataset.theme = root.dataset.theme === "navy" ? "light" : "navy";
+    try { localStorage.setItem(KEY, root.dataset.theme); } catch (e) {}
+  };
+</script>
+</body>
+</html>
