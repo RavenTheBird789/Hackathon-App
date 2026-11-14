@@ -138,7 +138,7 @@ def save_users(users):
 def ensure_admin():
     users = load_users()
     if "admin" not in users:
-        users["admin"] = {"hash": generate_password_hash("admin123"), "role": "admin", "major": "None"}
+        users["admin"] = {"hash": generate_password_hash(os.environ.get("ADMIN_PASSWORD", "admin123")), "role": "admin", "major": "Undecided"}
         save_users(users)
         print("Created default admin (admin / admin123) - change this password!")
 
@@ -221,7 +221,7 @@ def notify(events, current):
     for e in events:
         diff, urgent = deadline(current, e.task_date)
         if urgent:
-            notes.append({"color": "red" if diff <= 1 else "gold",
+            notes.append({"id": e.id, "color": "red" if diff <= 1 else "gold",
                           "text": f"{e.task_name} - {e.time_til(current).lower()} at {e.task_location}"})
     return notes
 
@@ -318,8 +318,19 @@ def bookmarks():
 def notifications():
     cur = date.today()
     events = sorted(load_events(), key=lambda e: e.task_date)
+    gone = session.get("dismissed", [])
+    notes = [n for n in notify(events, cur) if n["id"] not in gone]
     return render_template("page.html", page="notifications", user=current_user(),
-                           notes=notify(events, cur))
+                           notes=notes)
+
+
+@app.route("/dismiss/<int:eid>", methods=["POST"])
+def dismiss(eid):
+    gone = session.get("dismissed", [])
+    if eid not in gone:
+        gone.append(eid)
+    session["dismissed"] = gone
+    return redirect(url_for("notifications"))
 
 
 @app.route("/profile")
@@ -374,6 +385,14 @@ def admin(action, name):
             users[name]["hash"] = generate_password_hash(request.form["password"])
         save_users(users)
     return redirect(url_for("profile"))
+
+
+@app.context_processor
+def inject_badge():
+    """Number of undismissed notifications, for the red badge on the bell."""
+    gone = session.get("dismissed", [])
+    count = len([n for n in notify(load_events(), date.today()) if n["id"] not in gone])
+    return {"notif_count": count}
 
 
 ensure_admin()
