@@ -1,0 +1,24 @@
+{% for e in events %}
+<article class="card">
+  <div class="card-top">
+    <h3>{{ e.task_name }}</h3>
+    {% if 'Invite Only' in e.task_tags %}<span class="pill gold">Invite Only</span>{% endif %}
+    <span class="pill {{ 'blue' if e.mode == 'In-Person' else 'purple' }}">{{ e.mode }}</span>
+  </div>
+  <p class="where">{{ '📍' if e.mode == 'In-Person' else '🌐' }}
+    {% if e.distance %}{{ e.distance }} mi{{ ' (approx.)' if e.approx }} away ({{ e.task_location }}){% else %}{{ e.task_location }}{% endif %}</p>
+  {% if e.maps_url %}<p><a class="dir" href="{{ e.maps_url }}" target="_blank" rel="noopener">Directions in Google Maps</a></p>{% endif %}
+  <p class="desc">{{ e.task_desc }}</p>
+  <div class="meta">
+    {% for m in e.majors %}<span class="tagchip">{{ m }}</span>{% endfor %}
+    {% for t in e.task_tags if t != 'Invite Only' %}<span class="tagchip">{{ t }}</span>{% endfor %}
+    <span class="tagchip date {{ 'urgent' if e.is_urgent() }}">📅 {{ e.task_date.strftime('%b %d') }} · {{ e.time_til() }}</span>
+  </div>
+  <form method="post" action="{{ url_for('bookmark', eid=e.id) }}">
+    <button class="mark" aria-pressed="{{ 'true' if e.id in bookmarks else 'false' }}">
+      {{ 'Remove bookmark' if e.id in bookmarks else 'Bookmark' }}</button>
+  </form>
+</article>
+{% else %}
+<p class="empty">No events match. Clear a filter or try another search.</p>
+{% endfor %}
