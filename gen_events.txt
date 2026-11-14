@@ -1,0 +1,8 @@
+id|name|date|desc|location|host|mode|distance|tags|majors|lat|lon
+1|Tech Career Fair|2026-11-16|Meet recruiters from Fortune 500 companies. Bring your resume.|McNair Hall|COE|In-Person|0.2|Free Food;Professional|Comp Sci|36.0771|-79.7752
+2|Engineering Guest Lecture|2026-11-15|Industry speaker on the future of engineering. Attendance earns credit.|Online|COE|Digital||Extra Credit|All Majors||
+3|Robotics Club Meeting|2026-11-18|Weekly build session for the spring competition.|Smith Hall|ACM|In-Person|0.5|Invite Only|Comp Sci;Electrical|36.0735|-79.7755
+4|HACK NCAT Hackathon|2026-11-20|Team up, code, solve real problems, and network with industry.|McNair Hall|COE|In-Person|0.2|Free Food;Professional|Comp Sci;All Majors|36.0771|-79.7752
+5|Resume Workshop|2026-12-03|Get your resume reviewed by upperclassmen and alumni.|Fort IRC|NSBE|In-Person|0.4|Free Food|All Majors|36.0757|-79.7737
+6|Business Networking Mixer|2026-11-19|Meet employers and alumni from finance, marketing and accounting.|Fort IRC|NSBE|In-Person|0.4|Free Food;Professional|Accounting;Business Administration;Marketing;Economics|36.0757|-79.7737
+7|Nursing & Health Careers Panel|2026-11-24|Hear from nurses and public health professionals about their paths.|Online|ACM|Digital||Extra Credit|Nursing;Public Health;Kinesiology||
