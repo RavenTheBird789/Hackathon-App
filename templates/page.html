@@ -2,8 +2,8 @@
 <html lang="en" data-theme="navy">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NCAT Aggie Event Hub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NCAT AggieSync</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -11,8 +11,15 @@
 <div class="app">
   <header class="top">
     <div class="logo" aria-hidden="true">A&amp;T</div>
-    <h1>NCAT <span>Aggie</span> Event Hub</h1>
-    <button id="theme" class="icon-btn" aria-label="Switch color theme">🎨</button>
+    <h1>NCAT <span>Aggie</span>Sync</h1>
+    <div class="actions">
+      <a class="icon-btn {{ 'active' if page == 'bookmarks' }}" href="{{ url_for('bookmarks') }}"
+         aria-label="Bookmarks{{ ', ' ~ bookmark_new ~ ' new' if bookmark_new }}" title="Bookmarks" {% if page == 'bookmarks' %}aria-current="page"{% endif %}>🔖{% if bookmark_new %}<b class="badge" aria-hidden="true">{{ bookmark_new }}</b>{% endif %}</a>
+      <a class="icon-btn {{ 'active' if page == 'notifications' }}" href="{{ url_for('notifications') }}"
+         aria-label="Notifications{{ ', ' ~ notif_count ~ ' new' if notif_count }}" title="Notifications"
+         {% if page == 'notifications' %}aria-current="page"{% endif %}>🔔{% if notif_count %}<b class="badge" aria-hidden="true">{{ notif_count }}</b>{% endif %}</a>
+      <button id="theme" class="icon-btn" type="button" aria-label="Switch color theme" title="Switch color theme">🎨</button>
+    </div>
   </header>
 
   <main id="main">
@@ -24,8 +31,8 @@
       <div class="cal-head">
         <h2>{{ month_name }}</h2>
         <nav aria-label="Change month">
-          <a class="icon-btn" href="{{ url_for('home', m=prev) }}" aria-label="Previous month">‹</a>
-          <a class="icon-btn" href="{{ url_for('home', m=next) }}" aria-label="Next month">›</a>
+          <a class="icon-btn dark" href="{{ url_for('home', m=prev) }}" aria-label="Previous month">‹</a>
+          <a class="icon-btn dark" href="{{ url_for('home', m=next) }}" aria-label="Next month">›</a>
         </nav>
       </div>
       <table class="cal">
@@ -63,14 +70,26 @@
     </div>
 
     </div><div class="feed">
-    <h2>Upcoming events {% if args.get('day') or args.get('tag') or args.get('q') or args.get('major') or args.get('urgent') %}<a class="clear" href="{{ url_for('home') }}">Clear filters</a>{% endif %}</h2>
-    {% set events = sorted_events %}
-    <div class="cards">{% include 'cards.html' %}</div>
+    <h2>Events {% if filtered %}<a class="clear" href="{{ url_for('home') }}">Clear filters</a>{% endif %}</h2>
+    {% if filtered %}
+      {% set events = sorted_events %}
+      <div class="cards">{% include 'cards.html' %}</div>
+    {% else %}
+      <div class="prompt">
+        <p><strong>Find your events</strong></p>
+        <p>Search, pick a filter or tag, or tap a day on the calendar. Or <a href="{{ url_for('events_page') }}">browse all events</a>.</p>
+      </div>
+    {% endif %}
     </div></div>
+
+  {% elif page == 'events' %}
+    <h2>All upcoming events</h2>
+    <div class="cards">{% include 'cards.html' %}</div>
 
   {% elif page == 'bookmarks' %}
     <h2>Bookmarks</h2>
-    <div class="cards">{% include 'cards.html' %}</div>
+    {% if events %}<div class="cards">{% include 'cards.html' %}</div>
+    {% else %}<p class="empty">No bookmarks yet. Tap Bookmark on any event to save it here.</p>{% endif %}
 
   {% elif page == 'notifications' %}
     <h2>Notifications</h2>
@@ -112,8 +131,8 @@
   </main>
 
   <nav class="tabs" aria-label="Main">
-    {% for key, label, icon, ep in [('home','Home/Calendar','🏠','home'),('bookmarks','Bookmarks','🔖','bookmarks'),('notifications','Notifications','🔔','notifications'),('profile','Profile','👤','profile')] %}
-    <a href="{{ url_for(ep) }}" {% if page == key %}aria-current="page" class="active"{% endif %}><span aria-hidden="true">{{ icon }}</span>{{ label }}{% if key == 'notifications' and notif_count %}<b class="badge" role="status" aria-label="{{ notif_count }} notifications">{{ notif_count }}</b>{% endif %}</a>
+    {% for key, label, icon, ep in [('home','Home/Calendar','🏠','home'),('events','Events','📅','events_page'),('profile','Profile','👤','profile')] %}
+    <a href="{{ url_for(ep) }}" {% if page == key %}aria-current="page" class="active"{% endif %}><span aria-hidden="true">{{ icon }}</span>{{ label }}</a>
     {% endfor %}
   </nav>
 </div>
