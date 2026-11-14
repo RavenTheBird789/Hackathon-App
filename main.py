@@ -138,7 +138,7 @@ def save_users(users):
 def ensure_admin():
     users = load_users()
     if "admin" not in users:
-        users["admin"] = {"hash": generate_password_hash("admin123"), "role": "admin", "major": "Comp Sci"}
+        users["admin"] = {"hash": generate_password_hash("admin123"), "role": "admin", "major": "None"}
         save_users(users)
         print("Created default admin (admin / admin123) - change this password!")
 
