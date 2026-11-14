@@ -74,7 +74,7 @@
 
   {% elif page == 'notifications' %}
     <h2>Notifications</h2>
-    {% for n in notes %}<p class="note {{ n.color }}">{{ n.text }}</p>
+    {% for n in notes %}<form method="post" action="{{ url_for('dismiss', eid=n.id) }}"><button class="note {{ n.color }}" aria-label="Dismiss: {{ n.text }}">{{ n.text }}</button></form>
     {% else %}<p class="empty">Nothing due this week. New events appear here.</p>{% endfor %}
 
   {% elif page == 'profile' %}
@@ -113,7 +113,7 @@
 
   <nav class="tabs" aria-label="Main">
     {% for key, label, icon, ep in [('home','Home/Calendar','🏠','home'),('bookmarks','Bookmarks','🔖','bookmarks'),('notifications','Notifications','🔔','notifications'),('profile','Profile','👤','profile')] %}
-    <a href="{{ url_for(ep) }}" {% if page == key %}aria-current="page" class="active"{% endif %}><span aria-hidden="true">{{ icon }}</span>{{ label }}</a>
+    <a href="{{ url_for(ep) }}" {% if page == key %}aria-current="page" class="active"{% endif %}><span aria-hidden="true">{{ icon }}</span>{{ label }}{% if key == 'notifications' and notif_count %}<b class="badge" role="status" aria-label="{{ notif_count }} notifications">{{ notif_count }}</b>{% endif %}</a>
     {% endfor %}
   </nav>
 </div>
