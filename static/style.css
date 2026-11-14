@@ -106,3 +106,7 @@ input,select{padding:10px;border-radius:8px;border:1px solid #8a94ad;font-size:1
 
 .dir{color:var(--blue);font-weight:600}
 #gps{margin-top:12px;color:inherit}
+button.note{display:block;width:100%;margin-bottom:10px;text-align:left;font:inherit;font-weight:600;color:inherit;cursor:pointer;border:0;border-left:8px solid}
+.tabs a{position:relative}
+.badge{position:absolute;top:2px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-size:.72rem;line-height:18px;text-align:center;font-weight:700}
+@media (min-width:900px){.badge{top:8px;left:34px}}
